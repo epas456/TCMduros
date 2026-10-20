@@ -1,8 +1,17 @@
-import { Clapperboard, Cpu, Download, Home as HomeIcon, ListChecks, Redo2, Settings, Undo2 } from "lucide-react";
+import { CircleHelp, Clapperboard, Cpu, Download, Home as HomeIcon, ListChecks, Redo2, Settings, Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useStore } from "../store";
-import { Button, IconButton, Spinner } from "./ui";
+import { Button, IconButton, Kbd, Modal, Spinner } from "./ui";
+
+const SHORTCUTS: [string, string][] = [
+  ["Espacio / K", "Reproducir / pausa"], ["J / L", "Atrás 1 s / reproducir"], ["← / →", "Fotograma anterior / siguiente (Shift: 1 s)"],
+  ["Inicio / Fin", "Principio / final"], ["S", "Dividir en el cabezal"], ["C / V", "Cuchilla / selección"], ["N", "Imantado"],
+  ["Supr", "Eliminar (Shift: cerrar hueco)"], ["I / O / X", "Entrada / salida / borrar rango"], ["M", "Añadir marcador (Alt+clic: borrar)"],
+  ["T", "Añadir texto"], ["+ / − / Ctrl+rueda", "Zoom de la línea de tiempo"], ["Ctrl+Z / Ctrl+Shift+Z", "Deshacer / rehacer"],
+  ["Ctrl+C / Ctrl+V / Ctrl+D", "Copiar / pegar / duplicar"], ["Ctrl+A", "Seleccionar todo"], ["Ctrl+S / Ctrl+E", "Guardar / exportar"],
+  ["Doble clic en el visor", "Reproducir / pausa"], ["Doble clic en un medio", "Añadir en el cabezal"],
+];
 
 export function Logo({ onClick }: { onClick?: () => void }) {
   return (
@@ -33,6 +42,7 @@ export default function TopBar() {
   const jobs = useStore((s) => s.jobs);
   const centerTab = useStore((s) => s.centerTab);
   const [hw, setHw] = useState<{ label: string; ok: boolean } | null>(null);
+  const [help, setHelp] = useState(false);
 
   useEffect(() => {
     api.get("/api/system").then((s) => setHw({ label: s.tier_label, ok: s.hardware.tier !== "cpu" })).catch(() => undefined);
@@ -66,7 +76,17 @@ export default function TopBar() {
       <Button kind="ghost" size="sm" icon={running.length ? <Spinner size={12} /> : <ListChecks size={15} />} onClick={() => { const s = useStore.getState(); s.set({ jobsOpen: !s.jobsOpen }); }}>
         {running.length ? `${running.length} en curso` : "Trabajos"}
       </Button>
+      <IconButton title="Atajos de teclado" onClick={() => setHelp(true)}><CircleHelp size={17} /></IconButton>
       <IconButton title="Ajustes" onClick={() => st.set({ settingsOpen: true })}><Settings size={17} /></IconButton>
+      {help && (
+        <Modal title="Atajos de teclado" onClose={() => setHelp(false)}>
+          <div className="kv" style={{ gridTemplateColumns: "190px 1fr", fontSize: 13 }}>
+            {SHORTCUTS.map(([k, v]) => (
+              <span key={k} style={{ display: "contents" }}><span><Kbd>{k}</Kbd></span><span>{v}</span></span>
+            ))}
+          </div>
+        </Modal>
+      )}
       {view === "editor" && (
         <>
           {project?.storyboard && (

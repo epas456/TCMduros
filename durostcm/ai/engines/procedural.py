@@ -36,7 +36,7 @@ def _camera_from_prompt(prompt: str, motion: str | None) -> str:
     return "push_in"
 
 
-def _zoompan_expr(preset: str, frames: int) -> tuple[str, str, str]:
+def _zoompan_expr(preset: str, frames: int, fps: int = 24) -> tuple[str, str, str]:
     p = f"(on/{frames})"
     e = f"({p}*{p}*(3-2*{p}))"
     cx, cy = "iw/2-(iw/zoom/2)", "ih/2-(ih/zoom/2)"
@@ -51,13 +51,13 @@ def _zoompan_expr(preset: str, frames: int) -> tuple[str, str, str]:
     if preset == "tilt_down":
         return "1.18", cx, f"(ih-ih/zoom)*{e}"
     if preset == "handheld":
-        return "1.08", f"(iw-iw/zoom)/2*(1+0.45*sin(on/24*2.1))", f"(ih-ih/zoom)/2*(1+0.45*sin(on/24*1.7+2))"
+        return "1.08", f"(iw-iw/zoom)/2*(1+0.45*sin(on/{fps}*2.1))", f"(ih-ih/zoom)/2*(1+0.45*sin(on/{fps}*1.7+2))"
     return f"1+0.22*{e}", cx, cy
 
 
 async def animate_still(image: Path, out: Path, width: int, height: int, duration: float, fps: int, preset: str, ctx: GenContext) -> Path:
     frames = max(2, int(duration * fps))
-    z, x, y = _zoompan_expr(preset, frames)
+    z, x, y = _zoompan_expr(preset, frames, fps)
     W, H = width - width % 2, height - height % 2
     vf = (
         f"scale={int(W * 1.6) // 2 * 2}:{int(H * 1.6) // 2 * 2}:force_original_aspect_ratio=increase:flags=lanczos,"

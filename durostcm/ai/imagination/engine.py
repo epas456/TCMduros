@@ -413,7 +413,7 @@ def storyboard_ad(product: str, description: str = "", audience: str = "", tone:
 
 def _ad_voiceover(product: str, desc: str, audience: str, cta: str, brand: str, tone: str, r: random.Random) -> list[str]:
     hooks = ["¿Y si todo pudiera ser distinto?", "Hay momentos que lo cambian todo.", "Lo extraordinario empieza aquí.", "Nadie te lo había contado así."]
-    desire = [f"Cada día buscamos algo que esté a nuestra altura.", f"Porque mereces más que lo de siempre.", "Lo sabes desde el primer segundo."]
+    desire = ["Cada día buscamos algo que esté a nuestra altura.", "Porque mereces más que lo de siempre.", "Lo sabes desde el primer segundo."]
     reveal = [f"Presentamos {product}.", f"{product}. Diseñado para ti.", f"Así es {product}."]
     benefit = [f"{desc.capitalize()}." if desc else "Más fácil. Más tuyo. Más real.", "Sientes la diferencia desde el primer día.", "Hecho para quienes no se conforman."]
     close = [f"{cta}." if cta else "", f"{brand or product}. {cta}." if cta else f"{brand or product}."]

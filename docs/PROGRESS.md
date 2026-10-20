@@ -34,4 +34,6 @@ Rama de trabajo: `claude/durostcm-studio`
 - [x] 8. Subtítulos automáticos por reconocimiento de voz (faster-whisper)
 - [x] 9. Efectos de audio en el render (limpiar voz, reducción de ruido, eco, radio…)
 - [x] 10. Detección de escenas (dividir metraje en planos) y marcas al ritmo de la música
-- [ ] 11. Revisión final, tests completos, resumen al usuario
+- [x] 11. Sincronía labial (Wan 2.2 S2V), flujos ComfyUI por fotogramas verificados contra el código de ComfyUI
+- [x] 12. Importar desde URL (yt-dlp opcional), monitores de color, capítulos de YouTube, ayuda de atajos
+- [ ] 13. Revisión final y resumen al usuario

@@ -96,3 +96,48 @@ def test_subtitles_api(home, media_dir, monkeypatch):
         r = c.post(f"/api/projects/{pid}/subtitles/import", files={"file": ("x.srt", b"1\n00:00:00,000 --> 00:00:01,000\nSRT\n", "text/plain")}, data={"offset": "20"}).json()
         assert r["subtitles"] == 1
         assert c.get(f"/api/projects/{pid}/media/{mid}/beats").status_code == 200
+
+
+def test_import_from_url(home, media_dir):
+    from fastapi import FastAPI
+    from fastapi.responses import FileResponse
+
+    from durostcm.server.app import create_app
+
+    from .mocks import ServerThread, free_port
+
+    app = FastAPI()
+
+    @app.get("/plano.mp4")
+    async def f():
+        return FileResponse(media_dir / "clip_b.mp4", media_type="video/mp4")
+
+    port = free_port()
+    srv = ServerThread(app, port).start_and_wait()
+    try:
+        with TestClient(create_app()) as c:
+            pid = c.post("/api/projects", json={"name": "URL"}).json()["id"]
+            j = c.post(f"/api/projects/{pid}/media/url", json={"url": f"http://127.0.0.1:{port}/plano.mp4"}).json()
+            for _ in range(100):
+                jj = c.get(f"/api/jobs/{j['id']}").json()
+                if jj["status"] in ("done", "error"):
+                    break
+                time.sleep(0.1)
+            assert jj["status"] == "done", jj["error"]
+            media = c.get(f"/api/projects/{pid}").json()["media"]
+            assert media and media[0]["kind"] == "video" and "url" in media[0]["tags"]
+            assert c.post(f"/api/projects/{pid}/media/url", json={"url": "file:///etc/passwd"}).status_code == 400
+    finally:
+        srv.stop()
+
+
+def test_render_skips_missing_files(home, media_dir):
+    store = get_store()
+    p = store.create("Missing", width=320, height=180, fps=25)
+    m = import_file(store, p, media_dir / "clip_a.mp4")
+    p.tracks[0].clips.append(Clip(media_id=m.id, start=0, duration=2))
+    p.tracks[2].clips.append(Clip(kind="text", start=0, duration=2, text=__import__("durostcm.core.project", fromlist=["TextStyle"]).TextStyle(content="ok")))
+    store.save(p)
+    store.resolve(p.id, m.path).unlink()
+    res = asyncio.run(render_project(store, p, RenderSettings(format="mp4_h264", quality="draft")))
+    assert res["warnings"] and "Falta el archivo" in res["warnings"][0]

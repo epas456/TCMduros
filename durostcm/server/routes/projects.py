@@ -103,6 +103,85 @@ async def upload_media(pid: str, files: list[UploadFile] = File(...)):
     return {"media": added, "errors": errors}
 
 
+class ImportUrl(BaseModel):
+    url: str
+    name: str | None = None
+
+
+@router.post("/projects/{pid}/media/url")
+async def import_url(pid: str, body: ImportUrl):
+    """Descarga un medio desde una URL directa (o una página compatible con yt-dlp, si está instalado).
+
+    Usa sólo contenido sobre el que tengas derechos o licencia libre.
+    """
+    import shutil as _sh
+    import tempfile
+    from urllib.parse import urlparse
+
+    import httpx
+
+    url = body.url.strip()
+    if urlparse(url).scheme not in ("http", "https"):
+        raise HTTPException(400, "URL no válida")
+    store = get_store()
+    store.get(pid)
+
+    async def job(ctx: JobContext):
+        folder = store.subdir(pid, "media")
+        tmpdir = Path(tempfile.mkdtemp(dir=store.subdir(pid, "cache")))
+        try:
+            path_name = Path(urlparse(url).path).name
+            direct = kind_for(Path(path_name)) is not None
+            if not direct and _sh.which("yt-dlp"):
+                await ctx.progress(0.05, "Descargando con yt-dlp")
+                proc = await asyncio.create_subprocess_exec(
+                    "yt-dlp", "-f", "bv*[height<=2160]+ba/b", "--merge-output-format", "mp4", "-o", str(tmpdir / "%(title).80s.%(ext)s"), url,
+                    stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+                _o, err = await proc.communicate()
+                if proc.returncode != 0:
+                    raise RuntimeError(err.decode("utf-8", "ignore")[-400:])
+                files = [f for f in tmpdir.iterdir() if f.is_file()]
+                if not files:
+                    raise RuntimeError("yt-dlp no descargó nada")
+                src = files[0]
+            else:
+                src = tmpdir / (path_name or "descarga.mp4")
+                async with httpx.AsyncClient(timeout=httpx.Timeout(30, read=300), follow_redirects=True) as c:
+                    async with c.stream("GET", url) as r:
+                        r.raise_for_status()
+                        total = int(r.headers.get("content-length", 0))
+                        got = 0
+                        with open(src, "wb") as fh:
+                            async for chunk in r.aiter_bytes(1 << 20):
+                                ctx.check()
+                                fh.write(chunk)
+                                got += len(chunk)
+                                if total:
+                                    await ctx.progress(got / total * 0.95, f"{got / 2**20:.1f}/{total / 2**20:.1f} MB")
+                if kind_for(src) is None:
+                    ct = r.headers.get("content-type", "")
+                    ext = {"video/mp4": ".mp4", "video/webm": ".webm", "image/jpeg": ".jpg", "image/png": ".png", "audio/mpeg": ".mp3", "audio/wav": ".wav"}.get(ct.split(";")[0], "")
+                    if not ext:
+                        raise ValueError("La URL no apunta a un vídeo, imagen o audio (instala yt-dlp para páginas web)")
+                    src = src.rename(src.with_suffix(ext))
+            dst = unique_name(folder, body.name or src.name)
+            _sh.move(str(src), dst)
+            async with project_lock(pid):
+                p = store.get(pid)
+                item = await asyncio.to_thread(register_media, store, p, dst, name=body.name or dst.name, source="import",
+                                               credit=None, tags=["url"])
+                store.save(p)
+            await get_jobs().broadcast({"type": "media_added", "project_id": pid, "media": [item.model_dump()]})
+            if needs_proxy(item):
+                schedule_proxy(pid, item.id)
+            return {"media": [item.model_dump()]}
+        finally:
+            _sh.rmtree(tmpdir, ignore_errors=True)
+
+    j = get_jobs().submit("download", "Importar desde URL", job, project_id=pid, pool="io")
+    return j.public()
+
+
 class ImportPaths(BaseModel):
     paths: list[str]
     copy_files: bool = True

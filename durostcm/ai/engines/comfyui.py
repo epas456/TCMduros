@@ -216,7 +216,6 @@ class ComfyUIEngine(Engine):
     async def run(self, capability: str, req: GenRequest, ctx: GenContext) -> GenResult:
         if not await self.client.ping():
             raise EngineUnavailable("ComfyUI no está en marcha")
-        oi = await self.client.object_info()
         candidates = await self.workflows_for(capability)
         chosen = None
         if req.workflow:

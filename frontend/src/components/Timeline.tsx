@@ -153,6 +153,16 @@ export default function Timeline() {
     };
   }, []);
 
+  // al abrir un proyecto, encajar toda la pieza en la vista
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el || dur <= 0) return;
+    if (dur * useStore.getState().pps > el.clientWidth - 40) {
+      useStore.getState().setPps(Math.max(4, (el.clientWidth - 40) / dur));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project.id]);
+
   const step = niceStep(pps);
   const ticks: { t: number; major: boolean }[] = [];
   const t0 = Math.max(0, Math.floor(view.left / pps / step) * step);

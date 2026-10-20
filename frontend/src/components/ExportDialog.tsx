@@ -63,6 +63,8 @@ export default function ExportDialog() {
   })();
   const aspectDiffers = Math.abs(dims.w / dims.h - project.settings.width / project.settings.height) > 0.01;
   const dur = projectDuration(project);
+  const chapters = [{ t: 0, label: "Inicio" }, ...[...project.markers].sort((a, b) => a.t - b.t).filter((m) => m.t > 0.5).map((m) => ({ t: m.t, label: m.label }))]
+    .map((c) => `${fmtTime(c.t, project.settings.fps, false)} ${c.label}`).join("\n");
 
   function applyPlatform(id: string) {
     const p = presets?.platforms.find((x) => x.id === id);
@@ -183,6 +185,18 @@ export default function ExportDialog() {
           <div className="small muted">Salida: <b>{dims.w}×{dims.h}</b> · {fmt?.label}</div>
         </div>
       </div>
+      {project.markers.length > 0 && (
+        <>
+          <div className="sep" />
+          <div className="row" style={{ alignItems: "flex-start" }}>
+            <div className="grow">
+              <b>Capítulos de YouTube</b> <span className="small muted">(desde los marcadores)</span>
+              <pre className="job-logs" style={{ maxHeight: 90 }}>{chapters}</pre>
+            </div>
+            <Button size="sm" onClick={() => { void navigator.clipboard?.writeText(chapters); st.toast("Capítulos copiados", "ok"); }}>Copiar</Button>
+          </div>
+        </>
+      )}
       <div className="sep" />
       <div className="row" style={{ marginBottom: 8 }}>
         <b className="grow">Exportaciones del proyecto</b>

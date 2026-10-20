@@ -32,6 +32,8 @@ export default function MediaPanel() {
   const [over, setOver] = useState(false);
   const [busy, setBusy] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [urlOpen, setUrlOpen] = useState(false);
+  const [url, setUrl] = useState("");
   const [paths, setPaths] = useState("");
   const [info, setInfo] = useState<MediaItem | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -90,6 +92,7 @@ export default function MediaPanel() {
         <div className="row" style={{ justifyContent: "center", marginTop: 8 }}>
           <Button size="sm" icon={<Upload size={14} />} onClick={() => input.current?.click()}>Subir archivos</Button>
           <Button size="sm" kind="ghost" icon={<FolderInput size={14} />} onClick={() => setImportOpen(true)}>Desde ruta local</Button>
+          <Button size="sm" kind="ghost" onClick={() => setUrlOpen(true)} title="Descargar desde un enlace directo (o páginas compatibles con yt-dlp)">URL</Button>
           <Button size="sm" kind="ghost" onClick={() => srtRef.current?.click()} title="Importar subtítulos .srt / .vtt a la pista de subtítulos">SRT</Button>
         </div>
         <input ref={srtRef} type="file" hidden accept=".srt,.vtt" onChange={async (e) => {
@@ -151,6 +154,21 @@ export default function MediaPanel() {
         <Modal title="Importar desde rutas locales" onClose={() => setImportOpen(false)} footer={<><Button kind="ghost" onClick={() => setImportOpen(false)}>Cancelar</Button><Button kind="primary" onClick={() => void importPaths()} disabled={busy}>Importar</Button></>}>
           <p className="panel-sub">Como durosTCM se ejecuta en tu equipo, puedes importar archivos o carpetas completas sin subirlos (se copian al proyecto). Una ruta por línea.</p>
           <textarea value={paths} onChange={(e) => setPaths(e.target.value)} placeholder={"/Users/estudio/Rodaje/A001_C003.mov\nD:\\Proyectos\\Campaña\\musica"} rows={6} />
+        </Modal>
+      )}
+      {urlOpen && (
+        <Modal title="Importar desde URL" onClose={() => setUrlOpen(false)} footer={<><Button kind="ghost" onClick={() => setUrlOpen(false)}>Cancelar</Button>
+          <Button kind="primary" disabled={!url.trim()} onClick={async () => {
+            try {
+              const j = await api.post(`/api/projects/${project.id}/media/url`, { url });
+              st.upsertJob(j);
+              st.toast("Descargando… aparecerá en Medios", "info");
+              setUrlOpen(false);
+              setUrl("");
+            } catch (e) { st.toast((e as Error).message, "error"); }
+          }}>Descargar</Button></>}>
+          <p className="panel-sub">Pega un enlace directo a un vídeo, imagen o audio. Si tienes <b>yt-dlp</b> instalado también admite páginas de vídeo (hasta 4K). Descarga sólo contenido propio, con licencia libre o con permiso.</p>
+          <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…/plano.mp4" autoFocus />
         </Modal>
       )}
       {info && (

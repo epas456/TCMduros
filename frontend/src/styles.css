@@ -189,6 +189,12 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 16px; }
 .play-btn { width: 38px; height: 38px; border-radius: 50%; background: var(--grad); color: #fff; border: none; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
 .play-btn:hover { filter: brightness(1.1); }
 
+.scopes { position: absolute; right: 12px; bottom: 12px; background: rgba(10, 12, 17, .92); border: 1px solid var(--border-2); border-radius: 10px; padding: 6px; z-index: 3; }
+.scopes-head { display: flex; gap: 4px; margin-bottom: 6px; }
+.scopes-head .chip { font-size: 10px; padding: 2px 7px; }
+.scopes-body { display: flex; gap: 6px; align-items: flex-end; }
+.scopes canvas { border-radius: 6px; border: 1px solid var(--border); }
+
 /* ------------------------------------------------------------ línea de tiempo */
 .tl-toolbar { display: flex; align-items: center; gap: 4px; padding: 5px 8px; border-bottom: 1px solid var(--border); flex: none; }
 .tl-body { flex: 1; display: grid; grid-template-columns: 170px 1fr; min-height: 0; }

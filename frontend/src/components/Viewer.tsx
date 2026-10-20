@@ -1,11 +1,22 @@
-import { Camera, Grid3x3, Maximize, Pause, Play, Repeat, SkipBack, SkipForward, Volume2, VolumeX, Wand2 } from "lucide-react";
+import { Activity, Camera, Grid3x3, Maximize, Pause, Play, Repeat, SkipBack, SkipForward, Volume2, VolumeX, Wand2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api, urls } from "../api";
 import { fmtTime, projectDuration } from "../lib/timeline";
 import { Compositor } from "../player/compositor";
 import { useStore } from "../store";
 import type { Job } from "../types";
+import Scopes from "./Scopes";
 import { Button, IconButton, Modal, Select, Spinner } from "./ui";
+
+const getters = new WeakMap<object, () => HTMLCanvasElement | null>();
+function canvasGetter(ref: React.RefObject<HTMLCanvasElement>) {
+  let g = getters.get(ref);
+  if (!g) {
+    g = () => ref.current;
+    getters.set(ref, g);
+  }
+  return g;
+}
 
 export default function Viewer() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -18,6 +29,7 @@ export default function Viewer() {
   const outPoint = useStore((s) => s.outPoint);
   const [quality, setQuality] = useState<"0.5" | "1" | "0.25">("0.5");
   const [guides, setGuides] = useState(false);
+  const [scopes, setScopes] = useState(false);
   const [muted, setMuted] = useState(false);
   const [loop, setLoop] = useState(false);
   const [exact, setExact] = useState<{ url?: string; job?: string; frame?: string } | null>(null);
@@ -90,6 +102,7 @@ export default function Viewer() {
 
   if (!project) return null;
   const dur = projectDuration(project);
+  const getCanvas = canvasGetter(canvasRef);
   const st = useStore.getState();
 
   async function exactPreview() {
@@ -108,6 +121,7 @@ export default function Viewer() {
           { value: "0.25", label: "Calidad ¼" }, { value: "0.5", label: "Calidad ½" }, { value: "1", label: "Calidad completa" },
         ]} className="grow" />
         <IconButton title="Guías de zona segura y tercios" active={guides} onClick={() => setGuides(!guides)}><Grid3x3 size={16} /></IconButton>
+        <IconButton title="Monitores de color: histograma, forma de onda y vectorscopio" active={scopes} onClick={() => setScopes(!scopes)}><Activity size={16} /></IconButton>
         <IconButton title="Fotograma exacto del render final" onClick={() => setExact({ frame: urls.frame(project.id, playhead, 1080) + `&_=${Date.now()}` })}><Camera size={16} /></IconButton>
         <Button size="sm" icon={<Wand2 size={14} />} onClick={() => void exactPreview()} title="Renderiza con FFmpeg el tramo de entrada/salida (o 6 s alrededor del cabezal) para ver el resultado exacto">
           Previa exacta
@@ -121,6 +135,7 @@ export default function Viewer() {
             <div className="g-thirds" /><div className="g-action" /><div className="g-title" />
           </div>
         )}
+        {scopes && <Scopes source={getCanvas} />}
         {dur === 0 && (
           <div style={{ position: "absolute", textAlign: "center", color: "var(--muted)", maxWidth: 380 }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-2)", marginBottom: 6 }}>Tu línea de tiempo está vacía</div>

@@ -162,6 +162,7 @@ class Renderer:
         self._luts: dict[str, str] = {}
         self._cmd_n = 0
         self.warnings: list[str] = []
+        self._missing: set[str] = set()
 
         ps = project.settings
         self.fps = float(settings.fps or ps.fps)
@@ -227,12 +228,23 @@ class Renderer:
     def _visual_tracks(self) -> list[Track]:
         return [t for t in self.p.tracks if t.kind in ("video", "text") and not t.hidden]
 
+    def _media_ok(self, m: MediaItem | None) -> bool:
+        if m is None:
+            return False
+        if m.id in self._missing:
+            return False
+        if not self._media_path(m).exists():
+            self._missing.add(m.id)
+            self.warnings.append(f"Falta el archivo de «{m.name}»: se omite en el render")
+            return False
+        return True
+
     def _is_visual(self, c: Clip) -> bool:
         if c.kind in ("text", "color"):
             return True
         if c.kind == "media":
             m = self.p.media_by_id(c.media_id)
-            return m is not None and m.kind in ("video", "image")
+            return m is not None and m.kind in ("video", "image") and self._media_ok(m)
         return False
 
     def build_chains(self, track: Track) -> list[_Chain]:
@@ -408,7 +420,7 @@ class Renderer:
         if is_text and anim != "none" and fo <= 0:
             fo = min(0.4, dur / 5)
         if is_text and anim == "zoom":
-            filters.append(f"scale=w='max(2,trunc(iw*(0.85+0.15*min(t/0.6,1))/2)*2)':h=-2:eval=frame")
+            filters.append("scale=w='max(2,trunc(iw*(0.85+0.15*min(t/0.6,1))/2)*2)':h=-2:eval=frame")
         if fi > 0:
             filters.append(f"fade=t=in:st=0:d={min(fi, dur):.4f}:alpha=1")
         if fo > 0:
@@ -574,7 +586,7 @@ class Renderer:
                 if c.kind != "media" or c.muted:
                     continue
                 m = self.p.media_by_id(c.media_id)
-                if m is None or not m.has_audio or m.kind == "image":
+                if m is None or not m.has_audio or m.kind == "image" or not self._media_ok(m):
                     continue
                 if c.end <= self.start or c.start >= self.end:
                     continue
