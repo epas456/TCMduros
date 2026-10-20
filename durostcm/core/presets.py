@@ -192,6 +192,23 @@ def get_format(fid: str) -> FormatPreset:
     return FORMATS[fid]
 
 
+def _hw_ok(encoder: str | None) -> bool:
+    """Los codificadores por hardware sólo se ofrecen si existe el hardware."""
+    import sys
+
+    from .hardware import detect
+
+    if not encoder:
+        return True
+    if "nvenc" in encoder:
+        return any(g.get("vendor") == "nvidia" for g in detect()["gpus"])
+    if "videotoolbox" in encoder:
+        return sys.platform == "darwin"
+    if encoder.endswith("_qsv"):
+        return sys.platform != "darwin"
+    return True
+
+
 def catalog() -> dict:
     from .ffmpeg import available_encoders
 
@@ -205,7 +222,7 @@ def catalog() -> dict:
                 "kind": f.kind,
                 "alpha": f.alpha,
                 "description": f.description,
-                "available": f.encoder is None or f.encoder in enc,
+                "available": (f.encoder is None or f.encoder in enc) and _hw_ok(f.encoder),
             }
             for f in FORMATS.values()
         ],

@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
 from ...ai.service import project_lock, schedule_proxy
+from ...core.ffmpeg import run_ffmpeg
 from ...core.interchange import export_edl, export_fcpxml, export_otio_json
 from ...core.jobs import JobContext, get_jobs
 from ...core.media import import_file, kind_for, needs_proxy, register_media, unique_name
@@ -162,12 +163,30 @@ async def project_file(pid: str, rel: str):
     return FileResponse(p)
 
 
+_webm_locks: dict[str, asyncio.Lock] = {}
+
+
 @router.get("/projects/{pid}/media/{mid}/file")
-async def media_file(pid: str, mid: str, proxy: bool = True):
+async def media_file(pid: str, mid: str, proxy: bool = True, webm: bool = False):
+    """Archivo de un medio. ``webm=true`` sirve un proxy VP9/Opus para navegadores sin H.264."""
     store = get_store()
     m = store.get(pid).media_by_id(mid)
     if m is None:
         raise HTTPException(404, "Medio no encontrado")
+    if webm and m.kind in ("video", "audio"):
+        dst = store.subdir(pid, "cache") / f"{m.id}_proxy.webm"
+        async with _webm_locks.setdefault(f"{pid}/{mid}", asyncio.Lock()):
+            if not dst.exists():
+                src = store.resolve(pid, m.path)
+                tmp = dst.with_suffix(".part.webm")
+                if m.kind == "video":
+                    args = ["-i", str(src), "-vf", "scale='min(960,iw)':-2", "-c:v", "libvpx-vp9", "-deadline", "realtime", "-cpu-used", "8",
+                            "-row-mt", "1", "-crf", "38", "-b:v", "0", "-g", "12", "-c:a", "libopus", "-b:a", "96k", str(tmp)]
+                else:
+                    args = ["-i", str(src), "-vn", "-c:a", "libopus", "-b:a", "128k", str(tmp)]
+                await run_ffmpeg(args, label="proxy-webm")
+                tmp.replace(dst)
+        return FileResponse(dst, media_type="video/webm" if m.kind == "video" else "audio/webm")
     rel = m.proxy if (proxy and m.proxy) else m.path
     path = store.resolve(pid, rel)
     if not path.exists():

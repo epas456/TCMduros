@@ -13,7 +13,7 @@ Rama de trabajo: `claude/durostcm-studio`
 - [x] 3. Motor de imaginación: personas creativas (Director, Guionista, Diseñador de personajes, Explorador de localizaciones, Director de fotografía), biblias de personaje/localización
 - [x] 4. Pipelines: Personaje 4K, Anuncio, Cortometraje (brief → guion → storyboard → generación → timeline → export)
 - [x] 5. Rostros de inspiración con licencia libre (Openverse, Wikimedia Commons, Pexels/Unsplash opcional) + guardián ético + procedencia/etiquetado IA
-- [ ] 6. Frontend: editor NLE (timeline multipista, inspector, biblioteca), previsualización, paneles IA, diálogo de exportación
+- [x] 6. Frontend: editor NLE (timeline multipista, inspector, biblioteca), previsualización, paneles IA, diálogo de exportación
 - [ ] 7. Instaladores (Linux/macOS/Windows), Docker (ComfyUI + Ollama), README en español, tests, CI
 
 ## Notas para retomar
@@ -26,4 +26,5 @@ Rama de trabajo: `claude/durostcm-studio`
 ## Estado (sesión 1)
 
 - Backend completo y probado (`pytest -q`: render, 20+ formatos, IA procedural, ComfyUI/Ollama simulados, API, pipelines, rostros).
-- Pendiente: frontend (hito 6), instaladores/Docker/README/CI (hito 7).
+- Frontend completo (editor NLE, visor, inspector, paneles IA, storyboard, exportación) y probado con Playwright.
+- Pendiente: instaladores/Docker/README/CI (hito 7).
