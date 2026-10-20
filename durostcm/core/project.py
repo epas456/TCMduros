@@ -300,6 +300,7 @@ class Project(BaseModel):
     id: str = Field(default_factory=lambda: new_id("p_"))
     name: str = "Proyecto sin título"
     version: int = 1
+    rev: int = 0  # se incrementa cuando un proceso del servidor modifica la línea de tiempo
     created: float = Field(default_factory=time.time)
     updated: float = Field(default_factory=time.time)
     settings: ProjectSettings = Field(default_factory=ProjectSettings)

@@ -8,11 +8,11 @@ Rama de trabajo: `claude/durostcm-studio`
 
 ## Hitos
 
-- [ ] 1. Backend núcleo: modelo de proyecto/timeline, medios (ffprobe, miniaturas), motor de render FFmpeg, presets de exportación
-- [ ] 2. Motores IA: procedural (fallback CPU), ComfyUI, diffusers, Ollama (LLM), upscale, interpolación, TTS, música, cola de trabajos
-- [ ] 3. Motor de imaginación: personas creativas (Director, Guionista, Diseñador de personajes, Explorador de localizaciones, Director de fotografía), biblias de personaje/localización
-- [ ] 4. Pipelines: Personaje 4K, Anuncio, Cortometraje (brief → guion → storyboard → generación → timeline → export)
-- [ ] 5. Rostros de inspiración con licencia libre (Openverse, Wikimedia Commons, Pexels/Unsplash opcional) + guardián ético + procedencia/etiquetado IA
+- [x] 1. Backend núcleo: modelo de proyecto/timeline, medios (ffprobe, miniaturas), motor de render FFmpeg, presets de exportación
+- [x] 2. Motores IA: procedural (fallback CPU), ComfyUI, diffusers, Ollama (LLM), upscale, interpolación, TTS, música, cola de trabajos
+- [x] 3. Motor de imaginación: personas creativas (Director, Guionista, Diseñador de personajes, Explorador de localizaciones, Director de fotografía), biblias de personaje/localización
+- [x] 4. Pipelines: Personaje 4K, Anuncio, Cortometraje (brief → guion → storyboard → generación → timeline → export)
+- [x] 5. Rostros de inspiración con licencia libre (Openverse, Wikimedia Commons, Pexels/Unsplash opcional) + guardián ético + procedencia/etiquetado IA
 - [ ] 6. Frontend: editor NLE (timeline multipista, inspector, biblioteca), previsualización, paneles IA, diálogo de exportación
 - [ ] 7. Instaladores (Linux/macOS/Windows), Docker (ComfyUI + Ollama), README en español, tests, CI
 
@@ -22,3 +22,8 @@ Rama de trabajo: `claude/durostcm-studio`
 - Frontend: `frontend/` (Vite + React + TS). Build: `npm --prefix frontend run build` → servido por el backend.
 - Tests: `pytest -q`.
 - Sin GPU el motor `procedural` genera imágenes/vídeos de muestra para que todo el flujo funcione.
+
+## Estado (sesión 1)
+
+- Backend completo y probado (`pytest -q`: render, 20+ formatos, IA procedural, ComfyUI/Ollama simulados, API, pipelines, rostros).
+- Pendiente: frontend (hito 6), instaladores/Docker/README/CI (hito 7).

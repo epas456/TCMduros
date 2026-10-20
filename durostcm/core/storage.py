@@ -18,6 +18,12 @@ class ProjectNotFound(KeyError):
     pass
 
 
+class Conflict(Exception):
+    def __init__(self, current: Project):
+        super().__init__("El proyecto cambió en el servidor")
+        self.current = current
+
+
 class ProjectStore:
     def __init__(self, cfg: AppConfig | None = None):
         self.cfg = cfg or get_config()
@@ -128,11 +134,37 @@ class ProjectStore:
             self._cache[p.id] = p
             return p
 
-    def replace(self, pid: str, data: dict) -> Project:
-        """Sustituye el proyecto completo (lo usa el autoguardado del editor)."""
-        data = dict(data)
-        data["id"] = pid
-        p = Project.model_validate(data)
+    def apply_client(self, pid: str, data: dict) -> Project:
+        """Aplica el autoguardado del editor.
+
+        El editor es dueño de: nombre, ajustes, pistas, marcadores y notas (y de renombrar/etiquetar
+        medios). El servidor es dueño de: medios (alta/baja), storyboard, créditos y biblias. Si un
+        proceso del servidor cambió la línea de tiempo (``rev``) desde que el editor la cargó, se
+        lanza ``Conflict`` para que el editor recargue.
+        """
+        with self._lock(pid):
+            cur = self.get(pid)
+            client_rev = int(data.get("rev", cur.rev))
+            if client_rev != cur.rev:
+                raise Conflict(cur)
+            merged = cur.model_dump()
+            for k in ("name", "settings", "tracks", "markers", "notes"):
+                if k in data:
+                    merged[k] = data[k]
+            p = Project.model_validate(merged)
+            patches = {m["id"]: m for m in data.get("media", []) if isinstance(m, dict) and "id" in m}
+            for m in p.media:
+                patch = patches.get(m.id)
+                if patch:
+                    if isinstance(patch.get("name"), str):
+                        m.name = patch["name"]
+                    if isinstance(patch.get("tags"), list):
+                        m.tags = [str(t) for t in patch["tags"]]
+        return self.save(p)
+
+    def bump(self, p: Project) -> Project:
+        """Guarda un cambio hecho por el servidor en la línea de tiempo."""
+        p.rev += 1
         return self.save(p)
 
     def delete(self, pid: str) -> None:
