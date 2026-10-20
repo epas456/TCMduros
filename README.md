@@ -23,7 +23,7 @@ un anuncio para redes esta tarde o un cortometraje de prueba para un cliente —
 | **Montaje asistido** | **Subtítulos automáticos** con Whisper (99 idiomas) e importación SRT/VTT · **detección de escenas** para dividir metraje en planos · **marcas al ritmo** de la música (pulsos y compases, BPM) · ducking automático de música bajo la voz |
 | **Audio** | Volumen con keyframes, fundidos, solo/mute por pista, efectos (mejorar voz, reducción de ruido, reverberación, eco, radio, teléfono, graves, tono, limitador), normalización LUFS |
 | **Rotulación** | Títulos, subtítulos y rótulos inferiores con fuentes del sistema, contorno, sombra, caja, y animaciones (fundido, subir, bajar, zoom, máquina de escribir) |
-| **Estudio IA** | Texto→imagen, texto→vídeo, imagen→vídeo (animar), variaciones con identidad del personaje (FLUX Kontext), voz (Kokoro/Piper), música, escalado a 4K/8K, interpolación a 60 fps / cámara lenta, quitar fondo · botón **«Imaginar»** que convierte una idea en un prompt de cine |
+| **Estudio IA** | Texto→imagen, texto→vídeo, imagen→vídeo (animar), variaciones con identidad del personaje (FLUX Kontext), voz (Kokoro/Piper), **personaje que habla** (sincronía labial Wan 2.2 S2V), música, escalado a 4K/8K, interpolación a 60 fps / cámara lenta, quitar fondo · botón **«Imaginar»** que convierte una idea en un prompt de cine |
 | **Director IA** | Pipelines automáticos: **Personaje hiperrealista 4K**, **Anuncio**, **Cortometraje** y **Storyboard**; con estimación de tiempo según tu hardware |
 | **Reparto** | Biblias de personaje (rasgos, vestuario, voz, semilla, imágenes de referencia) y de localización reutilizables entre proyectos |
 | **Rostros** | Búsqueda de rostros de inspiración con **licencia libre** (Openverse, Wikimedia Commons, Pexels, Unsplash), atribución automática, descripción de rasgos por visión IA, registro de **consentimientos** de personas reales |
@@ -82,6 +82,8 @@ durosTCM detecta automáticamente qué tienes instalado y usa lo mejor disponibl
    | 12–16 GB | FLUX.1 dev fp8 · FLUX Kontext | **Wan 2.2 TI2V 5B** (720p, 24 fps) |
    | 24 GB | **Qwen-Image** · FLUX.1 dev | **Wan 2.2 A14B** (calidad cine) |
    | 32–48 GB+ | Qwen-Image bf16 | Wan 2.2 A14B bf16, HunyuanVideo 1.5, LTX-2 (flujos propios) |
+
+   Con **Wan 2.2 S2V** instalado, los diálogos de los cortometrajes se animan con sincronía labial automáticamente.
 
    ¿Tienes un flujo propio (LTX-2, HunyuanVideo 1.5, sincronía labial…)? Expórtalo desde ComfyUI con
    *Save (API)*, sustituye los valores por marcadores (`{{prompt}}`, `{{seed}}`, `{{width}}`, `{{height}}`,

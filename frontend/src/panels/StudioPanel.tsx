@@ -1,4 +1,4 @@
-import { AudioLines, Film, Image as ImageIcon, Maximize2, Music, Repeat2, Scissors, Shuffle, Sparkles, UserRound, Wand2 } from "lucide-react";
+import { AudioLines, Film, Image as ImageIcon, Maximize2, MessageCircle, Music, Repeat2, Scissors, Shuffle, Sparkles, UserRound, Wand2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { Badge, Button, Field, Section, Select, Slider, Spinner } from "../components/ui";
@@ -6,7 +6,7 @@ import { aspectId } from "../lib/timeline";
 import { useStore } from "../store";
 import type { Character, WorkflowInfo } from "../types";
 
-type Cap = "text2image" | "text2video" | "image2video" | "image2image" | "tts" | "music" | "upscale" | "interpolate" | "remove_bg";
+type Cap = "text2image" | "text2video" | "image2video" | "image2image" | "tts" | "music" | "upscale" | "interpolate" | "remove_bg" | "lipsync";
 
 const CAPS: { id: Cap; label: string; icon: typeof ImageIcon; backend: string }[] = [
   { id: "text2image", label: "Imagen", icon: ImageIcon, backend: "text2image" },
@@ -17,6 +17,7 @@ const CAPS: { id: Cap; label: string; icon: typeof ImageIcon; backend: string }[
   { id: "music", label: "Música", icon: Music, backend: "music" },
   { id: "upscale", label: "Escalar", icon: Maximize2, backend: "upscale_image" },
   { id: "interpolate", label: "Fluidez", icon: Shuffle, backend: "interpolate" },
+  { id: "lipsync", label: "Hablar", icon: MessageCircle, backend: "lipsync" },
 ];
 
 const SIZES: Record<string, [number, number]> = {
@@ -82,7 +83,9 @@ export default function StudioPanel() {
 
   const capInfo = capabilities[backendCap];
   const engineOpts = useMemo(() => engines.filter((e) => e.capabilities.includes(backendCap)), [engines, backendCap]);
-  const needsSource = ["image2video", "image2image", "upscale", "interpolate", "remove_bg"].includes(cap);
+  const needsSource = ["image2video", "image2image", "upscale", "interpolate", "remove_bg", "lipsync"].includes(cap);
+  const [audioSrc, setAudioSrc] = useState("");
+  const audios = project.media.filter((m) => m.has_audio);
   const sourceKinds = cap === "upscale" ? ["image", "video"] : cap === "interpolate" ? ["video"] : ["image"];
   const sources = project.media.filter((m) => sourceKinds.includes(m.kind));
 
@@ -131,6 +134,11 @@ export default function StudioPanel() {
       const long = upTarget === "8k" ? 7680 : upTarget === "4k" ? 3840 : 2560;
       Object.assign(params, ar >= 1 ? { target_width: long, target_height: Math.round(long / ar / 2) * 2, scale: 4 } : { target_height: long, target_width: Math.round(long * ar / 2) * 2, scale: 4 });
     }
+    if (cap === "lipsync") {
+      const a = project.media.find((m) => m.id === audioSrc);
+      if (!a) { st.toast("Elige la voz (audio) que dirá el personaje", "warn"); return; }
+      Object.assign(params, { duration: a.duration ?? 4, prompt: prompt || "talking naturally to camera, natural lip movement" });
+    }
     if (needsSource && !source) {
       st.toast("Elige un medio de entrada", "warn");
       return;
@@ -139,6 +147,7 @@ export default function StudioPanel() {
     try {
       const body: Record<string, unknown> = { project_id: project.id, capability: backendCap, params, engine: engine || null };
       if (needsSource) body.source_media_id = source;
+      if (cap === "lipsync") body.audio_media_id = audioSrc;
       const j = await api.post("/api/ai/generate", body);
       if (j.ethics?.issues?.length) st.toast(`⚠ ${j.ethics.issues.join(" ")} ${j.ethics.advice.join(" ")}`, "warn");
       st.toast(`En cola: ${capDef.label}. El resultado aparecerá en Medios.`, "info");
@@ -157,7 +166,7 @@ export default function StudioPanel() {
     image2image: "Cambios: «la misma persona en un mercado de especias de noche»",
     tts: "Texto a locutar…",
     music: "Estado de ánimo: «épica de tráiler», «corporativa alegre», «tensión de thriller»…",
-    upscale: "", interpolate: "", remove_bg: "",
+    upscale: "", interpolate: "", remove_bg: "", lipsync: "Opcional: «habla con calma, sonríe al final»",
   }[cap];
 
   return (
@@ -187,6 +196,12 @@ export default function StudioPanel() {
       {needsSource && (
         <Field label="Medio de entrada">
           <Select value={source} onChange={setSource} options={[{ value: "", label: sources.length ? "Elige…" : "Sin medios compatibles" }, ...sources.map((m) => ({ value: m.id, label: `${m.kind === "video" ? "🎬" : "🖼"} ${m.name}` }))]} />
+        </Field>
+      )}
+
+      {cap === "lipsync" && (
+        <Field label="Voz (audio del proyecto)" hint="Genera la voz en «Voz» y elige aquí el retrato en «Medio de entrada».">
+          <Select value={audioSrc} onChange={setAudioSrc} options={[{ value: "", label: audios.length ? "Elige…" : "Sin audios" }, ...audios.map((m) => ({ value: m.id, label: `🎙 ${m.name}` }))]} />
         </Field>
       )}
 

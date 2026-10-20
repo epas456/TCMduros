@@ -127,3 +127,45 @@ def test_ollama_llm(ollama):
     c, sb = asyncio.run(run())
     assert c.name == "Mateo Vidal" and c.age == 61
     assert len(sb.shots) == 2 and sb.shots[0].characters == [c.id] and sb.shots[0].dialogue[0].speaker == c.id
+
+
+def test_lipsync_comfy(comfy, tmp_path, media_dir):
+    reg = get_registry()
+
+    async def run():
+        ctx = GenContext(tmp_path / "ls")
+        img = await reg.run("text2image", GenRequest(prompt="retrato", width=512, height=512), ctx)
+        return await reg.run("lipsync", GenRequest(prompt="habla", image=img.files[0], audio=str(media_dir / "music.wav"), duration=3), ctx)
+
+    r = asyncio.run(run())
+    assert r.engine == "comfyui" and r.meta["workflow"] == "wan22_s2v_lipsync" and r.files[0].endswith(".mp4")
+    wf = comfy.server.config.app.state.mock["prompts"][-1]
+    s2v = next(n for n in wf.values() if n["class_type"] == "WanSoundImageToVideo")
+    assert (s2v["inputs"]["length"] - 1) % 4 == 0 and s2v["inputs"]["width"] % 32 == 0
+
+
+def test_short_film_pro_path(comfy, ollama):
+    """Cortometraje con LLM + ComfyUI: guion del LLM, planos generados en ComfyUI y diálogos con sincronía labial."""
+    import time
+
+    from fastapi.testclient import TestClient
+
+    from durostcm.server.app import create_app
+
+    with TestClient(create_app()) as c:
+        pid = c.post("/api/projects", json={"name": "Corto"}).json()["id"]
+        j = c.post("/api/pipelines/short_film", json={"project_id": pid, "params": {"idea": "un cine antiguo", "duration": 9, "aspect": "16:9"}}).json()
+        for _ in range(600):
+            jj = c.get(f"/api/jobs/{j['id']}").json()
+            if jj["status"] in ("done", "error"):
+                break
+            time.sleep(0.2)
+        assert jj["status"] == "done", (jj["error"], jj["logs"][-6:])
+        proj = c.get(f"/api/projects/{pid}").json()
+        sb = proj["storyboard"]
+        assert sb["title"] == "La última función" and len(sb["shots"]) == 2
+        engines = {m["generation"]["engine"] for m in proj["media"] if m.get("generation")}
+        assert "comfyui" in engines
+        assert any("lipsync" in m["tags"] for m in proj["media"]), "el plano con diálogo debe tener sincronía labial"
+        v1 = next(t for t in proj["tracks"] if t["name"] == "V1")
+        assert len(v1["clips"]) == 2

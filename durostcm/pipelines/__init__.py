@@ -289,9 +289,14 @@ async def short_film(ctx: JobContext, pid: str, params: dict[str, Any]) -> dict:
     await C.produce_shots(ctx, pid, sb, aspect, (0.08, 0.8))
     voices = {}
     try:
-        voices = await C.voice_lines(ctx, pid, sb, (0.8, 0.88))
+        voices = await C.voice_lines(ctx, pid, sb, (0.8, 0.85))
     except Exception as e:  # noqa: BLE001
         ctx.log(f"Diálogos: {e}")
+    if voices and params.get("lipsync", True):
+        await ctx.progress(0.85, "Sincronía labial de los diálogos")
+        n = await C.lipsync_shots(ctx, pid, sb, voices, aspect, (0.85, 0.88))
+        if n:
+            ctx.log(f"{n} plano(s) con sincronía labial")
     music = None
     try:
         music = await C.music_track(ctx, pid, sb, duration, (0.88, 0.93))

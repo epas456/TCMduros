@@ -29,17 +29,11 @@ from ..config import get_config
 NEG_PHOTO = "cartoon, anime, illustration, 3d render, cgi, plastic skin, wax skin, airbrushed, deformed, bad anatomy, extra fingers, mutated hands, watermark, text, logo, lowres, blurry, oversaturated, jpeg artifacts"
 NEG_WAN = "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走"
 
-_VIDEO_OUT = {
-    "90": {"class_type": "CreateVideo", "inputs": {"images": ["__FRAMES__", 0], "fps": "{{fps}}"}},
-    "91": {"class_type": "SaveVideo", "inputs": {"video": ["90", 0], "filename_prefix": "{{filename_prefix}}", "format": "mp4", "codec": "h264"}},
-}
-
-
 def _video(wf: dict, frames_node: str) -> dict:
+    """Los vídeos se guardan como fotogramas PNG (SaveImage existe en todas las versiones de
+    ComfyUI) y durosTCM los ensambla con FFmpeg a los fps nativos del modelo."""
     out = copy.deepcopy(wf)
-    v = copy.deepcopy(_VIDEO_OUT)
-    v["90"]["inputs"]["images"] = [frames_node, 0]
-    out.update(v)
+    out["90"] = {"class_type": "SaveImage", "inputs": {"images": [frames_node, 0], "filename_prefix": "{{filename_prefix}}"}}
     return out
 
 
@@ -255,6 +249,33 @@ _add("ltxv_t2v",
       "license": "LTX-Video Open Weights (revisar)"},
      _video(_LTX, "12"))
 
+
+# ------------------------------------------------------------------ sincronía labial
+_add(
+    "wan22_s2v_lipsync",
+    {"label": "Wan 2.2 S2V · personaje que habla (voz → vídeo)", "capability": "lipsync", "tier": 5, "vram": 24, "frames_rule": "4n+1",
+     "native_fps": 16, "native": [1024, 576],
+     "models": {"1.unet_name": "wan2.2_s2v_14B_fp8_scaled.safetensors", "2.clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+                "3.vae_name": "wan_2.1_vae.safetensors", "9.audio_encoder_name": "wav2vec2_large_english_fp16.safetensors"},
+     "main_model": "1.unet_name", "license": "Apache 2.0"},
+    _video({
+        "1": {"class_type": "UNETLoader", "inputs": {"unet_name": "{{model|wan2.2_s2v_14B_fp8_scaled.safetensors}}", "weight_dtype": "default"}},
+        "2": {"class_type": "CLIPLoader", "inputs": {"clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors", "type": "wan", "device": "default"}},
+        "3": {"class_type": "VAELoader", "inputs": {"vae_name": "wan_2.1_vae.safetensors"}},
+        "4": {"class_type": "ModelSamplingSD3", "inputs": {"model": ["1", 0], "shift": 8.0}},
+        "5": {"class_type": "CLIPTextEncode", "inputs": {"text": "{{prompt}}", "clip": ["2", 0]}},
+        "6": {"class_type": "CLIPTextEncode", "inputs": {"text": "{{negative}}", "clip": ["2", 0]}},
+        "7": {"class_type": "LoadImage", "inputs": {"image": "{{image}}"}},
+        "8": {"class_type": "LoadAudio", "inputs": {"audio": "{{audio}}"}},
+        "9": {"class_type": "AudioEncoderLoader", "inputs": {"audio_encoder_name": "wav2vec2_large_english_fp16.safetensors"}},
+        "10": {"class_type": "AudioEncoderEncode", "inputs": {"audio_encoder": ["9", 0], "audio": ["8", 0]}},
+        "11": {"class_type": "WanSoundImageToVideo", "inputs": {"positive": ["5", 0], "negative": ["6", 0], "vae": ["3", 0], "width": "{{width}}", "height": "{{height}}",
+                                                                 "length": "{{frames}}", "batch_size": 1, "audio_encoder_output": ["10", 0], "ref_image": ["7", 0]}},
+        "12": {"class_type": "KSampler", "inputs": {"model": ["4", 0], "positive": ["11", 0], "negative": ["11", 1], "latent_image": ["11", 2],
+                                                     "seed": "{{seed}}", "steps": "{{steps|20}}", "cfg": "{{cfg|6}}", "sampler_name": "uni_pc", "scheduler": "simple", "denoise": 1.0}},
+        "13": {"class_type": "VAEDecode", "inputs": {"samples": ["12", 0], "vae": ["3", 0]}},
+    }, "13"),
+)
 
 # ------------------------------------------------------------------ utilidades
 _PH = re.compile(r"\{\{(\w+)(?:\|([^}]*))?\}\}")

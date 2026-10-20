@@ -42,6 +42,14 @@ CATALOG: list[dict] = [
          {"repo": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "path": "split_files/vae/wan_2.1_vae.safetensors", "folder": "vae", "gb": 0.25},
          {"repo": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "path": "split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors", "folder": "text_encoders", "gb": 6.7},
      ]},
+    {"id": "wan22_s2v", "name": "Wan 2.2 S2V 14B · sincronía labial (fp8)", "kind": "video", "engine": "comfyui", "vram": 24, "license": "Apache 2.0", "commercial": True,
+     "notes": "El personaje habla: anima el retrato a partir de la voz. Se usa automáticamente en los diálogos del cortometraje.",
+     "files": [
+         {"repo": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "path": "split_files/diffusion_models/wan2.2_s2v_14B_fp8_scaled.safetensors", "folder": "diffusion_models", "gb": 16.4},
+         {"repo": "Comfy-Org/Wan_2.2_ComfyUI_Repackaged", "path": "split_files/audio_encoders/wav2vec2_large_english_fp16.safetensors", "folder": "audio_encoders", "gb": 0.63},
+         {"repo": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "path": "split_files/vae/wan_2.1_vae.safetensors", "folder": "vae", "gb": 0.25},
+         {"repo": "Comfy-Org/Wan_2.1_ComfyUI_repackaged", "path": "split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors", "folder": "text_encoders", "gb": 6.7},
+     ]},
     {"id": "ltxv_2b", "name": "LTX-Video 2B v0.9.5", "kind": "video", "engine": "comfyui", "vram": 8, "license": "LTX Open Weights (revisar)", "commercial": None,
      "notes": "Muy rápido, ideal para GPUs de 8 GB y previsualizaciones. Para LTX-2.x usa su flujo oficial en ComfyUI (se detecta como flujo de usuario).",
      "files": [

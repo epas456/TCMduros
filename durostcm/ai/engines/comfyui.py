@@ -245,10 +245,10 @@ class ComfyUIEngine(Engine):
             "cfg": req.guidance if "cfg" in json.dumps(wf_def["workflow"]) and req.guidance else None,
             "guidance": req.guidance,
             "strength": req.strength,
-            "filename_prefix": f"durostcm/{capability}",
+            "filename_prefix": f"durostcm/{capability}_{seed}",
             "model": req.model,
         }
-        if capability in ("text2video", "image2video"):
+        if capability in ("text2video", "image2video", "lipsync"):
             fps = req.fps or meta.get("native_fps", 24)
             native_fps = meta.get("native_fps", fps)
             values["fps"] = native_fps
@@ -268,13 +268,6 @@ class ComfyUIEngine(Engine):
                 await ctx.progress(0.02, f"Subiendo {key}")
                 values[key] = await self.client.upload(Path(src))
         workflow = W.fill(wf_def["workflow"], values)
-        # Compatibilidad: si el ComfyUI no tiene CreateVideo/SaveVideo, guardar fotogramas
-        if any(n.get("class_type") == "SaveVideo" for n in workflow.values()) and "SaveVideo" not in oi:
-            for nid in [k for k, n in workflow.items() if n.get("class_type") in ("CreateVideo", "SaveVideo")]:
-                frames_src = workflow[nid]["inputs"].get("images") if workflow[nid]["class_type"] == "CreateVideo" else None
-                del workflow[nid]
-                if frames_src:
-                    workflow["95"] = {"class_type": "SaveImage", "inputs": {"images": frames_src, "filename_prefix": values["filename_prefix"]}}
         ctx.log(f"ComfyUI · flujo {chosen['id']} · semilla {seed}")
         await ctx.progress(0.04, f"En cola: {chosen['label']}")
         pid = await self.client.queue(workflow)

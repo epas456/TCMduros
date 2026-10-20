@@ -148,6 +148,48 @@ async def voice_lines(ctx: JobContext, pid: str, sb: Storyboard, rng: tuple[floa
     return out
 
 
+async def lipsync_available() -> bool:
+    cands = await get_registry().candidates("lipsync")
+    return bool(cands)
+
+
+async def lipsync_shots(ctx: JobContext, pid: str, sb: Storyboard, voices: dict[str, list[MediaItem]], aspect: str, rng: tuple[float, float]) -> int:
+    """Sustituye el vídeo de los planos con diálogo de un personaje por uno con sincronía labial."""
+    if not await lipsync_available():
+        return 0
+    store = get_store()
+    p = store.get(pid)
+    todo = []
+    for s in sb.shots:
+        speaking = [d for d in s.dialogue if d.text.strip() and d.speaker not in ("narrador", "narrator", "")]
+        if speaking and voices.get(s.id) and s.image_media_id:
+            todo.append(s)
+    a, b = rng
+    done = 0
+    for i, s in enumerate(todo):
+        kf = p.media_by_id(s.image_media_id)
+        voice = voices[s.id][0]
+        if kf is None:
+            continue
+        chars = chars_by_id(s.characters)
+        prompt = f"{chars[0].identity_prompt if chars else 'a person'} talking naturally to camera, {s.description}, natural lip movement, subtle head motion"
+        w, h = gen_size(aspect, False)
+        try:
+            items = await generate_media(ctx, pid, "lipsync", GenRequest(prompt=prompt, image=str(store.resolve(pid, kf.path)), audio=str(store.resolve(pid, voice.path)),
+                                                                         width=w, height=h, duration=max(1.0, voice.duration or s.duration), seed=s.seed),
+                                         name=f"Plano {s.index + 1} · habla", tags=["lipsync", s.id],
+                                         progress_range=(a + (b - a) * i / len(todo), a + (b - a) * (i + 1) / len(todo)))
+            if items:
+                s.video_media_id = items[0].id
+                await update_shot(pid, s.id, video_media_id=items[0].id)
+                done += 1
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:  # noqa: BLE001
+            ctx.log(f"Sincronía labial plano {s.index + 1}: {e}")
+    return done
+
+
 async def music_track(ctx: JobContext, pid: str, sb: Storyboard, duration: float, rng: tuple[float, float]) -> MediaItem | None:
     prompt = sb.music_prompt or f"{sb.style} cinematic score"
     items = await generate_media(ctx, pid, "music", GenRequest(prompt=prompt, duration=duration + 1.0), name="Banda sonora", tags=["música"], progress_range=rng)

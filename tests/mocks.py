@@ -104,12 +104,16 @@ def comfy_app() -> FastAPI:
                 assert ins["image"] in state["files"], "imagen no subida"
         for nid, node in wf.items():
             if node["class_type"] == "SaveImage":
+                n = min(6, frames) if frames > 1 else 1
                 img = generate(text or "mock", width, height, 1)
-                buf = io.BytesIO()
-                img.save(buf, "PNG")
-                name = f"mock_{pid}.png"
-                state["files"][name] = buf.getvalue()
-                outputs[nid] = {"images": [{"filename": name, "subfolder": "", "type": "output"}]}
+                files = []
+                for k in range(n):
+                    buf = io.BytesIO()
+                    img.rotate(k * 3).save(buf, "PNG")
+                    name = f"mock_{pid}_{k:05d}_.png"
+                    state["files"][name] = buf.getvalue()
+                    files.append({"filename": name, "subfolder": "", "type": "output"})
+                outputs[nid] = {"images": files}
             if node["class_type"] == "SaveVideo":
                 name = f"mock_{pid}.mp4"
                 fps = 24
