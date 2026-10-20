@@ -36,4 +36,12 @@ Rama de trabajo: `claude/durostcm-studio`
 - [x] 10. Detección de escenas (dividir metraje en planos) y marcas al ritmo de la música
 - [x] 11. Sincronía labial (Wan 2.2 S2V), flujos ComfyUI por fotogramas verificados contra el código de ComfyUI
 - [x] 12. Importar desde URL (yt-dlp opcional), monitores de color, capítulos de YouTube, ayuda de atajos
-- [ ] 13. Revisión final y resumen al usuario
+- [x] 13. Revisión final: 35 tests en verde, instalador probado en copia limpia, interfaz verificada con Playwright
+
+## Ideas para siguientes versiones
+
+- Medidores de audio (VU/LUFS) en vivo en el visor (WebAudio).
+- Plantillas de rótulos animados y paquetes gráficos de marca.
+- Entrenamiento de LoRA de personaje desde su hoja de referencia (ai-toolkit / kohya) para máxima consistencia.
+- Multicámara y sincronización por audio.
+- Aplicación de escritorio (Tauri) con instalador firmado.

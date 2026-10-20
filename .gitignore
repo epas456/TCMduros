@@ -9,3 +9,5 @@ frontend/dist/
 .DS_Store
 *.log
 /data/
+durostcm.sh
+durostcm.bat

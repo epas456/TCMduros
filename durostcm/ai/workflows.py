@@ -144,7 +144,9 @@ _add(
         "8": {"class_type": "ReferenceLatent", "inputs": {"conditioning": ["7", 0], "latent": ["6", 0]}},
         "9": {"class_type": "FluxGuidance", "inputs": {"conditioning": ["8", 0], "guidance": "{{guidance|2.5}}"}},
         "10": {"class_type": "ConditioningZeroOut", "inputs": {"conditioning": ["7", 0]}},
-        "11": {"class_type": "KSampler", "inputs": {"model": ["1", 0], "positive": ["9", 0], "negative": ["10", 0], "latent_image": ["6", 0],
+        # El lienzo de salida usa el tamaño pedido (p. ej. 16:9) aunque la referencia sea un retrato vertical
+        "14": {"class_type": "EmptySD3LatentImage", "inputs": {"width": "{{width}}", "height": "{{height}}", "batch_size": 1}},
+        "11": {"class_type": "KSampler", "inputs": {"model": ["1", 0], "positive": ["9", 0], "negative": ["10", 0], "latent_image": ["14", 0],
                                                      "seed": "{{seed}}", "steps": "{{steps|20}}", "cfg": 1.0, "sampler_name": "euler", "scheduler": "simple", "denoise": 1.0}},
         "12": {"class_type": "VAEDecode", "inputs": {"samples": ["11", 0], "vae": ["3", 0]}},
         "13": {"class_type": "SaveImage", "inputs": {"images": ["12", 0], "filename_prefix": "{{filename_prefix}}"}},
