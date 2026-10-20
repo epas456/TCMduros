@@ -1,10 +1,10 @@
 import { Diamond, RotateCcw, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import { defaultGrade, findClip, fmtDur, kfValue, mediaById } from "../lib/timeline";
+import { defaultGrade, findClip, fmtDur, kfValue, mediaById, splitClip, uid } from "../lib/timeline";
 import { useStore } from "../store";
 import type { Clip, Keyframe, Project } from "../types";
-import { Badge, Button, ColorInput, Empty, Field, IconButton, NumberInput, Section, Select, Slider, Toggle } from "./ui";
+import { Badge, Button, ColorInput, Empty, Field, IconButton, NumberInput, Section, Select, Slider, Spinner, Toggle } from "./ui";
 
 type Path = "transform.x" | "transform.y" | "transform.scale" | "transform.rotation" | "transform.opacity" | "volume";
 const KF_KEY: Record<Path, string> = {
@@ -103,6 +103,70 @@ function AIActions({ clip }: { clip: Clip }) {
           <div style={{ marginTop: 4, maxHeight: 80, overflow: "auto" }}>{m.generation.prompt}</div>
         </div>
       )}
+    </Section>
+  );
+}
+
+function AnalysisTools({ clip }: { clip: Clip }) {
+  const project = useStore((s) => s.project)!;
+  const m = mediaById(project, clip.media_id);
+  const [busy, setBusy] = useState<string | null>(null);
+  const st = useStore.getState();
+  if (!m || m.kind === "image") return null;
+  const toTimeline = (src: number) => clip.start + (src - clip.in_point) / clip.speed;
+  const clipEndT = clip.start + clip.duration;
+  const inside = (t: number) => t > clip.start + 0.05 && t < clipEndT - 0.05;
+
+  async function scenes() {
+    setBusy("scenes");
+    try {
+      const r = await api.get<{ cuts: number[] }>(`/api/projects/${project.id}/media/${m!.id}/scenes`);
+      const cuts = r.cuts.map(toTimeline).filter(inside);
+      if (!cuts.length) { st.toast("No se detectaron cortes de plano en este clip", "info"); return; }
+      st.edit((p) => {
+        const f = findClip(p, clip.id);
+        if (!f) return;
+        let cur = f.clip;
+        for (const t of cuts) {
+          const second = splitClip(cur, t);
+          if (second) { f.track.clips.push(second); cur = second; }
+        }
+        f.track.clips.sort((a, b) => a.start - b.start);
+      });
+      st.toast(`Clip dividido en ${cuts.length + 1} planos`, "ok");
+    } finally { setBusy(null); }
+  }
+
+  async function beats(every: number) {
+    setBusy("beats");
+    try {
+      const r = await api.get<{ bpm: number | null; beats: number[] }>(`/api/projects/${project.id}/media/${m!.id}/beats`);
+      const ts = r.beats.filter((_, i) => i % every === 0).map(toTimeline).filter((t) => t >= clip.start && t <= clipEndT);
+      st.edit((p) => {
+        for (const t of ts) p.markers.push({ id: uid("k_"), t, label: every > 1 ? "Compás" : "Pulso", color: "#22D3EE" });
+      });
+      st.toast(`${ts.length} marcas añadidas${r.bpm ? ` · ${r.bpm} BPM` : ""}. Activa el imantado para cortar al ritmo.`, "ok");
+    } finally { setBusy(null); }
+  }
+
+  async function subs() {
+    setBusy("subs");
+    try {
+      await api.post(`/api/projects/${project.id}/subtitles/auto`, { clip_id: clip.id, language: "es" });
+      st.toast("Transcribiendo con Whisper… los subtítulos aparecerán en su pista", "info");
+    } catch (e) {
+      st.toast((e as Error).message, "error");
+    } finally { setBusy(null); }
+  }
+
+  return (
+    <Section title="Análisis y montaje automático" defaultOpen={false}>
+      <div className="grid2">
+        {m.kind === "video" && <Button size="sm" onClick={() => void scenes()} disabled={!!busy}>{busy === "scenes" ? <Spinner size={12} /> : null} Dividir en escenas</Button>}
+        {m.has_audio && <Button size="sm" onClick={() => void subs()} disabled={!!busy}>Subtítulos automáticos</Button>}
+        {m.has_audio && <Button size="sm" onClick={() => void beats(1)} disabled={!!busy}>{busy === "beats" ? <Spinner size={12} /> : null} Marcas en cada pulso</Button>}
+        {m.has_audio && <Button size="sm" onClick={() => void beats(4)} disabled={!!busy}>Marcas por compás</Button>}
+      </div>
     </Section>
   );
 }
@@ -301,7 +365,7 @@ export default function Inspector() {
 
       {isVisual && clip.kind !== "text" && (
         <Section title="Efectos" defaultOpen={clip.effects.length > 0}>
-          {clip.effects.map((e, i) => (
+          {clip.effects.map((e, i) => presets?.audio_effects?.some((a) => a.id === e.type) ? null : (
             <div key={i} className="card" style={{ padding: 8 }}>
               <div className="row">
                 <Toggle checked={e.enabled} onChange={(v) => patch((c) => { c.effects[i].enabled = v; })} />
@@ -341,6 +405,24 @@ export default function Inspector() {
       {hasAudio && (
         <Section title="Audio">
           <KfSlider clip={clip} path="volume" label="Volumen" min={0} max={2} fmt={(v) => `${Math.round(v * 100)}%`} />
+          {clip.effects.filter((e) => presets?.audio_effects?.some((a) => a.id === e.type)).map((e) => {
+            const i = clip.effects.indexOf(e);
+            return (
+              <div key={i} className="card" style={{ padding: 8 }}>
+                <div className="row">
+                  <Toggle checked={e.enabled} onChange={(v) => patch((c) => { c.effects[i].enabled = v; })} />
+                  <b className="grow">{presets?.audio_effects.find((x) => x.id === e.type)?.label ?? e.type}</b>
+                  <IconButton title="Quitar" onClick={() => patch((c) => { c.effects.splice(i, 1); })}><Trash2 size={13} /></IconButton>
+                </div>
+                {Object.entries(e.params).map(([k, v]) => (
+                  <Field key={k} label={k} inline><NumberInput value={Number(v)} step={1} onChange={(nv) => patch((c) => { c.effects[i].params[k] = nv; })} /></Field>
+                ))}
+              </div>
+            );
+          })}
+          <Select value="" onChange={(v) => { if (!v) return; const def = presets?.audio_effects.find((x) => x.id === v); patch((c) => { c.effects.push({ type: v, enabled: true, params: { ...(def?.params ?? {}) } }); }); }}
+            options={[{ value: "", label: "+ Efecto de audio…" }, ...(presets?.audio_effects ?? []).map((x) => ({ value: x.id, label: x.label }))]} />
+          <div style={{ height: 8 }} />
           <Toggle checked={clip.muted} onChange={(v) => patch((c) => { c.muted = v; })} label="Silenciar clip" />
           <div className="grid2" style={{ marginTop: 8 }}>
             <Slider label="Fundido entrada" value={clip.audio_fade_in} min={0} max={Math.min(10, clip.duration)} fmt={(v) => `${v.toFixed(1)} s`} onChange={(v) => patch((c) => { c.audio_fade_in = v; }, false)} onStart={begin} onCommit={end} />
@@ -369,6 +451,7 @@ export default function Inspector() {
       )}
 
       {clip.kind === "media" && <AIActions clip={clip} />}
+      {clip.kind === "media" && <AnalysisTools clip={clip} />}
 
       {m?.credit && (
         <Section title="Licencia" defaultOpen={false}>

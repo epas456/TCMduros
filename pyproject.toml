@@ -40,6 +40,8 @@ audio = [
 ]
 # Recorte de fondo
 matting = ["rembg>=2.0.57"]
+# Subtítulos automáticos (reconocimiento de voz)
+stt = ["faster-whisper>=1.0"]
 dev = ["pytest>=8", "pytest-asyncio>=0.23"]
 
 [project.scripts]

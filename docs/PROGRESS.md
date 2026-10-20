@@ -31,7 +31,7 @@ Rama de trabajo: `claude/durostcm-studio`
 
 ## Hitos extra (sesión 1, en curso)
 
-- [ ] 8. Subtítulos automáticos por reconocimiento de voz (faster-whisper)
-- [ ] 9. Efectos de audio en el render (limpiar voz, reducción de ruido, eco, radio…)
-- [ ] 10. Detección de escenas (dividir metraje en planos) y marcas al ritmo de la música
+- [x] 8. Subtítulos automáticos por reconocimiento de voz (faster-whisper)
+- [x] 9. Efectos de audio en el render (limpiar voz, reducción de ruido, eco, radio…)
+- [x] 10. Detección de escenas (dividir metraje en planos) y marcas al ritmo de la música
 - [ ] 11. Revisión final, tests completos, resumen al usuario

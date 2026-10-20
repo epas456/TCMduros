@@ -32,7 +32,7 @@ from .. import APP_NAME, __version__
 from ..config import get_config
 from . import keyframes as kf
 from .ffmpeg import filter_script_args, run_ffmpeg
-from .looks import effect_filters, grade_filters
+from .looks import AUDIO_EFFECT_IDS, audio_effect_filters, effect_filters, grade_filters
 from .presets import FormatPreset, get_format
 from .project import Clip, MediaItem, Project, Track
 from .storage import ProjectStore
@@ -594,6 +594,9 @@ class Renderer:
                 if abs(speed - 1) > 1e-4:
                     fl += [f"atempo={f:.6f}" for f in _atempo_chain(speed)]
                 fl += [f"aresample={sr}", "aformat=sample_fmts=fltp:channel_layouts=stereo"]
+                for eff in c.effects:
+                    if eff.enabled and eff.type in AUDIO_EFFECT_IDS:
+                        fl += [f.replace("48000", str(sr)) for f in audio_effect_filters(eff.type, eff.params)]
                 vol = c.volume * trk.volume
                 vkf = c.keyframes.get("volume") or []
                 if vkf:

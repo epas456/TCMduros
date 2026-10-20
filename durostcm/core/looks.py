@@ -193,6 +193,47 @@ EFFECTS = [
     {"id": "flicker", "label": "Parpadeo", "params": {}},
 ]
 
+# --------------------------------------------------------------------- efectos de audio
+def audio_effect_filters(effect_type: str, params: dict) -> list[str]:
+    p = params or {}
+    if effect_type == "voice_enhance":
+        return ["highpass=f=80", "lowpass=f=14000", "afftdn=nf=-25", "equalizer=f=3000:t=q:w=1.2:g=3",
+                "acompressor=threshold=-18dB:ratio=3:attack=10:release=150:makeup=2"]
+    if effect_type == "denoise_audio":
+        return [f"afftdn=nf={-abs(float(p.get('strength', 25))):.1f}"]
+    if effect_type == "echo":
+        d = int(p.get("delay_ms", 250))
+        return [f"aecho=0.8:0.6:{d}:{float(p.get('decay', 0.4)):.2f}"]
+    if effect_type == "reverb":
+        return ["aecho=0.8:0.72:40|80|130|190:0.45|0.35|0.25|0.15"]
+    if effect_type == "radio":
+        return ["highpass=f=400", "lowpass=f=3400", "acompressor=threshold=-20dB:ratio=6:makeup=4"]
+    if effect_type == "phone":
+        return ["highpass=f=600", "lowpass=f=3000", "acrusher=bits=10:mix=0.3"]
+    if effect_type == "bass_boost":
+        return [f"bass=g={float(p.get('gain', 6)):.1f}"]
+    if effect_type == "pitch":
+        st = float(p.get("semitones", 3))
+        r = 2 ** (st / 12)
+        return [f"asetrate=48000*{r:.5f}", "aresample=48000", f"atempo={1 / r:.5f}"]
+    if effect_type == "limiter":
+        return ["alimiter=limit=0.9"]
+    return []
+
+
+AUDIO_EFFECTS = [
+    {"id": "voice_enhance", "label": "Mejorar voz (limpieza + presencia + compresión)", "params": {}},
+    {"id": "denoise_audio", "label": "Reducción de ruido", "params": {"strength": 25}},
+    {"id": "reverb", "label": "Reverberación", "params": {}},
+    {"id": "echo", "label": "Eco", "params": {"delay_ms": 250, "decay": 0.4}},
+    {"id": "radio", "label": "Radio / walkie", "params": {}},
+    {"id": "phone", "label": "Teléfono", "params": {}},
+    {"id": "bass_boost", "label": "Realce de graves", "params": {"gain": 6}},
+    {"id": "pitch", "label": "Cambiar tono (semitonos)", "params": {"semitones": 3}},
+    {"id": "limiter", "label": "Limitador", "params": {}},
+]
+AUDIO_EFFECT_IDS = {e["id"] for e in AUDIO_EFFECTS}
+
 # Transiciones disponibles en xfade (FFmpeg 6+)
 TRANSITIONS = [
     "fade", "dissolve", "fadeblack", "fadewhite", "fadegrays", "wipeleft", "wiperight", "wipeup", "wipedown",

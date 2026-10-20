@@ -13,7 +13,7 @@ from ...config import get_config
 from ...core import hardware
 from ...core.ffmpeg import ffmpeg_version, has_ffmpeg
 from ...core.jobs import get_jobs
-from ...core.looks import EFFECTS, TRANSITIONS, list_looks
+from ...core.looks import AUDIO_EFFECTS, EFFECTS, TRANSITIONS, list_looks
 from ...core.presets import catalog as presets_catalog
 from ...core.text import font_path, list_fonts
 
@@ -55,7 +55,7 @@ async def patch_settings(patch: dict):
 
 @router.get("/presets")
 async def presets():
-    return {**presets_catalog(), "looks": list_looks(), "effects": EFFECTS, "transitions": TRANSITIONS}
+    return {**presets_catalog(), "looks": list_looks(), "effects": EFFECTS, "audio_effects": AUDIO_EFFECTS, "transitions": TRANSITIONS}
 
 
 @router.get("/fonts")

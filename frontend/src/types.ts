@@ -419,6 +419,7 @@ export interface Presets {
   qualities: string[];
   looks: { id: string; label: string; grade: Partial<ColorGrade> }[];
   effects: { id: string; label: string; params: Record<string, unknown> }[];
+  audio_effects: { id: string; label: string; params: Record<string, unknown> }[];
   transitions: string[];
 }
 

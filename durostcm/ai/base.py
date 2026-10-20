@@ -23,6 +23,7 @@ Capability = Literal[
     "lipsync",
     "llm",
     "vision",
+    "stt",
 ]
 
 CAPABILITY_LABELS: dict[str, str] = {
@@ -39,6 +40,7 @@ CAPABILITY_LABELS: dict[str, str] = {
     "lipsync": "Sincronía labial",
     "llm": "Cerebro creativo (LLM)",
     "vision": "Visión (describir imágenes)",
+    "stt": "Subtítulos automáticos (voz → texto)",
 }
 
 

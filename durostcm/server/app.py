@@ -19,6 +19,7 @@ from .routes import ai as ai_routes
 from .routes import library as library_routes
 from .routes import projects as project_routes
 from .routes import system as system_routes
+from .routes import tools as tools_routes
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
@@ -73,6 +74,7 @@ def create_app() -> FastAPI:
     app.include_router(project_routes.router, prefix="/api")
     app.include_router(ai_routes.router, prefix="/api")
     app.include_router(library_routes.router, prefix="/api")
+    app.include_router(tools_routes.router, prefix="/api")
 
     @app.websocket("/api/ws")
     async def ws(websocket: WebSocket):

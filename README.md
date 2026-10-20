@@ -20,6 +20,8 @@ un anuncio para redes esta tarde o un cortometraje de prueba para un cliente —
 | **Editor (NLE)** | Línea de tiempo multipista (vídeo, texto, audio), arrastrar y soltar, recorte por bordes, cuchilla, imantado, marcadores, entrada/salida, copiar/pegar, duplicar, eliminación con cierre de hueco, deshacer/rehacer ilimitado, autoguardado e historial de versiones |
 | **Visor** | Compositor en tiempo real (Canvas) con transformaciones, keyframes, transiciones, etalonaje, textos animados y mezcla de audio · guías de zona segura · fotograma exacto y «previa exacta» renderizada con FFmpeg |
 | **Inspector** | Posición/escala/rotación/opacidad con **keyframes** y curvas de suavizado, recorte, volteo, movimiento de cámara virtual (Ken Burns, paneos, cámara en mano), **etalonaje** (exposición, contraste, saturación, temperatura, matiz, sombras/altas luces, viñeta, grano, nitidez, LUT .cube) con 14 *looks* de cine, 15 efectos (croma, glow, VHS, película antigua, estabilizar, bandas cinemascope…), 44 transiciones, fundidos, volumen con keyframes |
+| **Montaje asistido** | **Subtítulos automáticos** con Whisper (99 idiomas) e importación SRT/VTT · **detección de escenas** para dividir metraje en planos · **marcas al ritmo** de la música (pulsos y compases, BPM) · ducking automático de música bajo la voz |
+| **Audio** | Volumen con keyframes, fundidos, solo/mute por pista, efectos (mejorar voz, reducción de ruido, reverberación, eco, radio, teléfono, graves, tono, limitador), normalización LUFS |
 | **Rotulación** | Títulos, subtítulos y rótulos inferiores con fuentes del sistema, contorno, sombra, caja, y animaciones (fundido, subir, bajar, zoom, máquina de escribir) |
 | **Estudio IA** | Texto→imagen, texto→vídeo, imagen→vídeo (animar), variaciones con identidad del personaje (FLUX Kontext), voz (Kokoro/Piper), música, escalado a 4K/8K, interpolación a 60 fps / cámara lenta, quitar fondo · botón **«Imaginar»** que convierte una idea en un prompt de cine |
 | **Director IA** | Pipelines automáticos: **Personaje hiperrealista 4K**, **Anuncio**, **Cortometraje** y **Storyboard**; con estimación de tiempo según tu hardware |
@@ -91,6 +93,7 @@ durosTCM detecta automáticamente qué tienes instalado y usa lo mejor disponibl
    También vale cualquier servidor compatible con OpenAI (LM Studio, llama.cpp, vLLM).
 
 3. **Voces**: `pip install durostcm[audio]` instala **Kokoro** (voces naturales en español e inglés; funciona en CPU).
+   **Subtítulos automáticos**: `pip install durostcm[stt]` instala faster-whisper.
 
 4. **Escalado e interpolación neuronales** (opcional): descarga `realesrgan-ncnn-vulkan` y `rife-ncnn-vulkan`
    e indica sus rutas en **Ajustes → Motores IA**. Funcionan en GPUs NVIDIA, AMD, Intel y Apple.

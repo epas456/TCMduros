@@ -87,6 +87,7 @@ class Settings(BaseModel):
             "vision": ["ollama"],
             "remove_bg": ["rembg", "procedural"],
             "lipsync": ["comfyui"],
+            "stt": ["whisper"],
         }
     )
     endpoints: EngineEndpoints = Field(default_factory=EngineEndpoints)

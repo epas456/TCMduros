@@ -35,6 +35,7 @@ export default function MediaPanel() {
   const [paths, setPaths] = useState("");
   const [info, setInfo] = useState<MediaItem | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  const srtRef = useRef<HTMLInputElement>(null);
   const st = useStore.getState();
 
   async function upload(files: FileList | File[]) {
@@ -89,7 +90,20 @@ export default function MediaPanel() {
         <div className="row" style={{ justifyContent: "center", marginTop: 8 }}>
           <Button size="sm" icon={<Upload size={14} />} onClick={() => input.current?.click()}>Subir archivos</Button>
           <Button size="sm" kind="ghost" icon={<FolderInput size={14} />} onClick={() => setImportOpen(true)}>Desde ruta local</Button>
+          <Button size="sm" kind="ghost" onClick={() => srtRef.current?.click()} title="Importar subtítulos .srt / .vtt a la pista de subtítulos">SRT</Button>
         </div>
+        <input ref={srtRef} type="file" hidden accept=".srt,.vtt" onChange={async (e) => {
+          const f = e.target.files?.[0];
+          if (!f) return;
+          const fd = new FormData();
+          fd.append("file", f);
+          fd.append("offset", String(useStore.getState().playhead));
+          try {
+            const r = await api.form(`/api/projects/${project.id}/subtitles/import`, fd);
+            st.toast(`${r.subtitles} subtítulos importados en el cabezal`, "ok");
+          } catch (err) { st.toast((err as Error).message, "error"); }
+          e.target.value = "";
+        }} />
         <input ref={input} type="file" multiple hidden accept="video/*,image/*,audio/*,.mxf,.mov,.mkv,.exr" onChange={(e) => e.target.files && void upload(e.target.files)} />
       </div>
       <div className="row" style={{ marginBottom: 8 }}>

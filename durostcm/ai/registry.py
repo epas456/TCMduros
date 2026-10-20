@@ -14,6 +14,7 @@ from .engines.llm import LLMEngine, OllamaEngine, OpenAICompatEngine
 from .engines.procedural import ProceduralEngine
 from .engines.speech import KokoroEngine, PiperEngine, SystemTTSEngine
 from .engines.tools import A1111Engine, RealESRGANEngine, RembgEngine, RIFEEngine
+from .engines.whisper import WhisperEngine
 
 
 class Registry:
@@ -21,7 +22,7 @@ class Registry:
         self.engines: dict[str, Engine] = {}
         for e in (
             ComfyUIEngine(), DiffusersEngine(), A1111Engine(), RealESRGANEngine(), RIFEEngine(), RembgEngine(),
-            KokoroEngine(), PiperEngine(), SystemTTSEngine(), OllamaEngine(), OpenAICompatEngine(), ProceduralEngine(),
+            KokoroEngine(), PiperEngine(), SystemTTSEngine(), OllamaEngine(), OpenAICompatEngine(), WhisperEngine(), ProceduralEngine(),
         ):
             self.engines[e.id] = e
         self._status: dict[str, tuple[float, EngineStatus]] = {}
