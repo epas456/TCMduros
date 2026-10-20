@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "durostcm"
+version = "1.0.0"
+description = "durosTCM — estudio de vídeo con IA local: editor, generación de personajes y escenas hiperrealistas, exportación 4K"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [{ name = "TCM" }]
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+  "pydantic>=2.5",
+  "python-multipart>=0.0.9",
+  "httpx>=0.27",
+  "pillow>=10.0",
+  "numpy>=1.26",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Generación local con diffusers (GPU NVIDIA / Apple Silicon)
+gpu = [
+  "torch>=2.4",
+  "diffusers>=0.33",
+  "transformers>=4.44",
+  "accelerate>=0.33",
+  "safetensors>=0.4",
+  "sentencepiece>=0.2",
+  "huggingface_hub>=0.24",
+  "imageio[ffmpeg]>=2.34",
+]
+# Voces y música locales
+audio = [
+  "kokoro>=0.9",
+  "soundfile>=0.12",
+]
+# Recorte de fondo
+matting = ["rembg>=2.0.57"]
+dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+durostcm = "durostcm.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["durostcm*"]
+
+[tool.setuptools.package-data]
+durostcm = ["ai/workflows/*.json", "assets/**/*", "web/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
