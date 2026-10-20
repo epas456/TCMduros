@@ -1,0 +1,44 @@
+# Estudio completo: durosTCM + ComfyUI (GPU) + Ollama (GPU).
+#   cd docker && docker compose up -d --build
+#   Abre http://localhost:7777
+# Requiere NVIDIA Container Toolkit para la GPU.
+services:
+  durostcm:
+    build: { context: .., dockerfile: docker/Dockerfile }
+    ports: ["7777:7777"]
+    volumes:
+      - durostcm-data:/data
+      - comfy-models:/comfy-models
+    environment:
+      DUROSTCM_HOME: /data
+      DUROSTCM_COMFYUI_URL: http://comfyui:8188
+      DUROSTCM_COMFYUI_PATH: /comfy-models
+      DUROSTCM_OLLAMA_URL: http://ollama:11434
+      # DUROSTCM_TOKEN: cambia-esto   # exige token si lo expones en la red
+    depends_on: [comfyui, ollama]
+
+  comfyui:
+    build: { context: .., dockerfile: docker/comfyui.Dockerfile }
+    ports: ["8188:8188"]
+    volumes:
+      - comfy-models:/opt/ComfyUI/models
+      - comfy-output:/opt/ComfyUI/output
+    deploy:
+      resources:
+        reservations:
+          devices: [{ driver: nvidia, count: all, capabilities: [gpu] }]
+
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes: ["ollama:/root/.ollama"]
+    deploy:
+      resources:
+        reservations:
+          devices: [{ driver: nvidia, count: all, capabilities: [gpu] }]
+
+volumes:
+  durostcm-data:
+  comfy-models:
+  comfy-output:
+  ollama:

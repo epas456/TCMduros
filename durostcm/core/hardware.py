@@ -73,13 +73,15 @@ def _ram_gb() -> float:
     return 0.0
 
 
+# Segundos de cómputo orientativos (Wan 2.2 TI2V 5B a 720p/24 fps, FLUX/Qwen a ~1 MP).
+# Referencia: Wan 2.2 5B genera 5 s de vídeo 720p en ~9 min en una RTX 4090.
 TIERS = {
     "cpu": {"label": "Sin GPU (modo boceto)", "image_s": None, "video_s_per_s": None},
-    "entry": {"label": "GPU 8 GB (RTX 3060/4060)", "image_s": 45, "video_s_per_s": 150},
-    "mid": {"label": "GPU 12-16 GB (RTX 4070/4080)", "image_s": 20, "video_s_per_s": 70},
-    "high": {"label": "GPU 24 GB (RTX 3090/4090)", "image_s": 9, "video_s_per_s": 35},
-    "pro": {"label": "GPU 32-48 GB+ (RTX 5090 / A6000 / H100)", "image_s": 5, "video_s_per_s": 18},
-    "apple": {"label": "Apple Silicon", "image_s": 60, "video_s_per_s": 240},
+    "entry": {"label": "GPU 8 GB (RTX 3060/4060)", "image_s": 40, "video_s_per_s": 240},
+    "mid": {"label": "GPU 12-16 GB (RTX 4070/4080)", "image_s": 20, "video_s_per_s": 170},
+    "high": {"label": "GPU 24 GB (RTX 3090/4090)", "image_s": 10, "video_s_per_s": 110},
+    "pro": {"label": "GPU 32-80 GB (RTX 5090 / A6000 / H100)", "image_s": 5, "video_s_per_s": 50},
+    "apple": {"label": "Apple Silicon", "image_s": 60, "video_s_per_s": 600},
 }
 
 

@@ -14,7 +14,7 @@ Rama de trabajo: `claude/durostcm-studio`
 - [x] 4. Pipelines: Personaje 4K, Anuncio, Cortometraje (brief → guion → storyboard → generación → timeline → export)
 - [x] 5. Rostros de inspiración con licencia libre (Openverse, Wikimedia Commons, Pexels/Unsplash opcional) + guardián ético + procedencia/etiquetado IA
 - [x] 6. Frontend: editor NLE (timeline multipista, inspector, biblioteca), previsualización, paneles IA, diálogo de exportación
-- [ ] 7. Instaladores (Linux/macOS/Windows), Docker (ComfyUI + Ollama), README en español, tests, CI
+- [x] 7. Instaladores (Linux/macOS/Windows), Docker (ComfyUI + Ollama), README en español, tests, CI
 
 ## Notas para retomar
 
@@ -27,4 +27,11 @@ Rama de trabajo: `claude/durostcm-studio`
 
 - Backend completo y probado (`pytest -q`: render, 20+ formatos, IA procedural, ComfyUI/Ollama simulados, API, pipelines, rostros).
 - Frontend completo (editor NLE, visor, inspector, paneles IA, storyboard, exportación) y probado con Playwright.
-- Pendiente: instaladores/Docker/README/CI (hito 7).
+- Instaladores (install.sh / install.ps1 / setup_comfyui.sh), Docker (durosTCM + ComfyUI + Ollama), README, CI: hechos.
+
+## Hitos extra (sesión 1, en curso)
+
+- [ ] 8. Subtítulos automáticos por reconocimiento de voz (faster-whisper)
+- [ ] 9. Efectos de audio en el render (limpiar voz, reducción de ruido, eco, radio…)
+- [ ] 10. Detección de escenas (dividir metraje en planos) y marcas al ritmo de la música
+- [ ] 11. Revisión final, tests completos, resumen al usuario

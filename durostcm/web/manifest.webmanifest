@@ -1,0 +1,13 @@
+{
+  "name": "durosTCM · Estudio de vídeo IA",
+  "short_name": "durosTCM",
+  "description": "Editor de vídeo profesional con IA local: personajes hiperrealistas, anuncios y cortometrajes en 4K.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0c11",
+  "theme_color": "#0a0c11",
+  "lang": "es",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

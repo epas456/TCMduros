@@ -151,16 +151,18 @@ class AppConfig:
 
     # --- persistencia ----------------------------------------------------
     def _load(self) -> Settings:
+        s: Settings | None = None
         if self.config_file.exists():
             try:
                 data = yaml.safe_load(self.config_file.read_text("utf-8")) or {}
-                return Settings.model_validate(data)
+                s = Settings.model_validate(data)
             except Exception:  # config corrupta: no bloquear el arranque
                 backup = self.config_file.with_suffix(".yaml.bak")
                 self.config_file.replace(backup)
-        s = Settings()
-        self._write(s)
-        return s
+        if s is None:
+            s = Settings()
+            self._write(s)
+        return _env_overrides(s)
 
     def _write(self, s: Settings) -> None:
         tmp = self.config_file.with_suffix(".yaml.tmp")
@@ -173,6 +175,36 @@ class AppConfig:
             self.settings = Settings.model_validate(merged)
             self._write(self.settings)
             return self.settings
+
+
+# Variables de entorno que sobrescriben la configuración (útil en Docker/servidores)
+ENV_MAP = {
+    "DUROSTCM_COMFYUI_URL": ("endpoints", "comfyui_url"),
+    "DUROSTCM_COMFYUI_PATH": ("endpoints", "comfyui_path"),
+    "DUROSTCM_OLLAMA_URL": ("endpoints", "ollama_url"),
+    "DUROSTCM_OLLAMA_MODEL": ("endpoints", "ollama_model"),
+    "DUROSTCM_OPENAI_URL": ("endpoints", "openai_compat_url"),
+    "DUROSTCM_HOST": (None, "host"),
+    "DUROSTCM_PORT": (None, "port"),
+    "DUROSTCM_TOKEN": (None, "auth_token"),
+    "HF_TOKEN": ("api_keys", "huggingface"),
+    "PEXELS_API_KEY": ("api_keys", "pexels"),
+    "UNSPLASH_ACCESS_KEY": ("api_keys", "unsplash"),
+}
+
+
+def _env_overrides(s: Settings) -> Settings:
+    data = s.model_dump()
+    changed = False
+    for env, (section, key) in ENV_MAP.items():
+        val = os.environ.get(env)
+        if not val:
+            continue
+        target = data[section] if section else data
+        if not target.get(key) or section is None or env.startswith("DUROSTCM_"):
+            target[key] = int(val) if key == "port" else val
+            changed = True
+    return Settings.model_validate(data) if changed else s
 
 
 def _deep_merge(base: dict, patch: dict) -> dict:
